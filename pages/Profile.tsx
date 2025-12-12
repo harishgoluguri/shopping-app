@@ -1,40 +1,52 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Calendar, Hash, LogOut, Loader2, MapPin, Phone, Edit2, Save, X } from 'lucide-react';
+import { 
+  User, Mail, MapPin, Phone, LogOut, Loader2, 
+  Package, LayoutDashboard, Settings, Heart, 
+  ChevronRight, CreditCard, Edit2, Save, X, ShoppingBag 
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { CURRENCY } from '../constants';
+
+type Tab = 'overview' | 'orders' | 'addresses' | 'settings' | 'wishlist';
 
 const Profile: React.FC = () => {
   const { user, loading, logout, updateProfile } = useAuth();
   const navigate = useNavigate();
-  
-  const [isEditing, setIsEditing] = useState(false);
-  
-  // Detailed Address States
-  const [editAddress1, setEditAddress1] = useState('');
-  const [editAddress2, setEditAddress2] = useState('');
-  const [editCity, setEditCity] = useState('');
-  const [editState, setEditState] = useState('');
-  const [editPincode, setEditPincode] = useState('');
-  const [editCountry, setEditCountry] = useState('');
+  const [activeTab, setActiveTab] = useState<Tab>('overview');
 
-  const [editPhone, setEditPhone] = useState('');
-  const [editAltPhone, setEditAltPhone] = useState('');
+  // Edit States
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
+  // Address Form State
+  const [addrForm, setAddrForm] = useState({
+    address1: '', address2: '', city: '', state: '', pincode: '', country: ''
+  });
+
+  // Profile Form State
+  const [profileForm, setProfileForm] = useState({
+    name: '', phone: '', altPhone: ''
+  });
+
   useEffect(() => {
-    if (!loading && !user) {
-      navigate('/login');
-    }
+    if (!loading && !user) navigate('/login');
     if (user) {
-      setEditAddress1(user.address1 || '');
-      setEditAddress2(user.address2 || '');
-      setEditCity(user.city || '');
-      setEditState(user.state || '');
-      setEditPincode(user.pincode || '');
-      setEditCountry(user.country || '');
-      setEditPhone(user.phone_number || '');
-      setEditAltPhone(user.alternate_phone_number || '');
+      setAddrForm({
+        address1: user.address1 || '',
+        address2: user.address2 || '',
+        city: user.city || '',
+        state: user.state || '',
+        pincode: user.pincode || '',
+        country: user.country || ''
+      });
+      setProfileForm({
+        name: user.name || '',
+        phone: user.phone_number || '',
+        altPhone: user.alternate_phone_number || ''
+      });
     }
   }, [user, loading, navigate]);
 
@@ -43,255 +55,318 @@ const Profile: React.FC = () => {
     navigate('/login');
   };
 
-  const handleSave = async () => {
+  const handleSaveAddress = async () => {
     setSaving(true);
     setMessage(null);
-    
     const err = await updateProfile({
-      address1: editAddress1,
-      address2: editAddress2,
-      city: editCity,
-      state: editState,
-      pincode: editPincode,
-      country: editCountry,
-      phone_number: editPhone,
-      alternate_phone_number: editAltPhone
+      address1: addrForm.address1,
+      address2: addrForm.address2,
+      city: addrForm.city,
+      state: addrForm.state,
+      pincode: addrForm.pincode,
+      country: addrForm.country
     });
-
-    if (err) {
-      setMessage({ type: 'error', text: err });
-    } else {
-      setMessage({ type: 'success', text: 'Profile updated successfully' });
-      setIsEditing(false);
-    }
     setSaving(false);
-  };
-
-  const handleCancel = () => {
-    if (user) {
-      setEditAddress1(user.address1 || '');
-      setEditAddress2(user.address2 || '');
-      setEditCity(user.city || '');
-      setEditState(user.state || '');
-      setEditPincode(user.pincode || '');
-      setEditCountry(user.country || '');
-      setEditPhone(user.phone_number || '');
-      setEditAltPhone(user.alternate_phone_number || '');
+    if (err) setMessage({ type: 'error', text: err });
+    else {
+      setIsEditingAddress(false);
+      setMessage({ type: 'success', text: 'Address updated successfully' });
     }
-    setIsEditing(false);
-    setMessage(null);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <Loader2 className="animate-spin text-black" size={40} />
-      </div>
-    );
-  }
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    setMessage(null);
+    const err = await updateProfile({
+      name: profileForm.name,
+      phone_number: profileForm.phone,
+      alternate_phone_number: profileForm.altPhone
+    });
+    setSaving(false);
+    if (err) setMessage({ type: 'error', text: err });
+    else {
+      setIsEditingProfile(false);
+      setMessage({ type: 'success', text: 'Profile updated successfully' });
+    }
+  };
 
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-white"><Loader2 className="animate-spin text-black" size={40} /></div>;
   if (!user) return null;
 
-  const joinDate = user.created_at ? new Date(user.created_at).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }) : 'N/A';
+  const NavItem = ({ id, icon: Icon, label }: { id: Tab, icon: any, label: string }) => (
+    <button 
+      onClick={() => { setActiveTab(id); setMessage(null); setIsEditingAddress(false); setIsEditingProfile(false); }}
+      className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 font-bold uppercase tracking-wider text-xs ${activeTab === id ? 'bg-black text-white shadow-lg' : 'text-gray-400 hover:bg-gray-100 hover:text-black'}`}
+    >
+      <Icon size={18} />
+      <span>{label}</span>
+      {activeTab === id && <ChevronRight size={16} className="ml-auto" />}
+    </button>
+  );
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] pt-32 pb-20 px-4">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-[#F8F8F8] pt-24 pb-24 lg:px-8">
+      <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        <div className="bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-fade-in-up">
-          {/* Header */}
-          <div className="bg-black text-white p-12 text-center relative overflow-hidden">
-             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gold-400 via-gold-600 to-gold-400"></div>
-             <div className="w-24 h-24 bg-white/10 rounded-full mx-auto flex items-center justify-center mb-6 backdrop-blur-md border border-white/20">
-                <span className="text-4xl font-heading font-black text-white">
-                  {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
-                </span>
-             </div>
-             <h1 className="text-3xl md:text-4xl font-heading font-black mb-2 tracking-tight">
-               {user.name || 'Valued Member'}
-             </h1>
-             <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">Sdg Sneakers Insider</p>
-
-             <button 
-                onClick={() => setIsEditing(!isEditing)}
-                className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
-                title={isEditing ? "Cancel Editing" : "Edit Profile"}
-             >
-                {isEditing ? <X size={20} /> : <Edit2 size={20} />}
-             </button>
-          </div>
-
-          {/* Data Grid */}
-          <div className="p-8 md:p-12 space-y-8">
-            <div className="flex justify-between items-center border-b border-gray-100 pb-2 mb-6">
-              <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">Account Details</h2>
-              {isEditing && <span className="text-xs font-bold text-gold-500 animate-pulse">EDIT MODE</span>}
-            </div>
-
-            {message && (
-              <div className={`p-4 rounded-2xl text-sm font-bold text-center ${message.type === 'success' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
-                {message.text}
+        {/* SIDEBAR NAVIGATION */}
+        <div className="lg:col-span-3 px-4 lg:px-0">
+           <div className="bg-white rounded-[2rem] p-8 shadow-xl sticky top-28">
+              <div className="flex flex-col items-center mb-8">
+                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-3xl font-heading font-black text-gray-400 mb-4 border-2 border-white shadow-lg">
+                    {user.name?.charAt(0).toUpperCase()}
+                 </div>
+                 <h2 className="text-xl font-heading font-black uppercase text-center">{user.name}</h2>
+                 <p className="text-[10px] font-bold text-gold-600 uppercase tracking-widest bg-gold-50 px-3 py-1 rounded-full mt-2">Platinum Member</p>
               </div>
-            )}
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
-              <div className="bg-[#F5F5F7] p-6 rounded-3xl flex items-start gap-4 transition-colors">
-                 <div className="p-3 bg-white rounded-full shadow-sm"><User size={20} /></div>
-                 <div>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Full Name</p>
-                    <p className="font-bold text-black">{user.name || 'Not set'}</p>
-                 </div>
-              </div>
-
-              <div className="bg-[#F5F5F7] p-6 rounded-3xl flex items-start gap-4 transition-colors">
-                 <div className="p-3 bg-white rounded-full shadow-sm"><Mail size={20} /></div>
-                 <div>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Email Address</p>
-                    <p className="font-bold text-black break-all">{user.email}</p>
-                 </div>
-              </div>
-
-              {/* Editable Address */}
-              <div className={`p-6 rounded-3xl flex items-start gap-4 transition-all col-span-1 md:col-span-2 ${isEditing ? 'bg-white border-2 border-black shadow-lg' : 'bg-[#F5F5F7] hover:bg-gray-100'}`}>
-                 <div className="p-3 bg-white rounded-full shadow-sm h-fit"><MapPin size={20} /></div>
-                 <div className="w-full">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Address</p>
-                    {isEditing ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <input 
-                            type="text" 
-                            value={editAddress1} 
-                            onChange={(e) => setEditAddress1(e.target.value)}
-                            className="w-full bg-gray-50 border-none rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-black md:col-span-2"
-                            placeholder="Address Line 1"
-                          />
-                          <input 
-                            type="text" 
-                            value={editAddress2} 
-                            onChange={(e) => setEditAddress2(e.target.value)}
-                            className="w-full bg-gray-50 border-none rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-black md:col-span-2"
-                            placeholder="Address Line 2 (Optional)"
-                          />
-                          <input 
-                            type="text" 
-                            value={editCity} 
-                            onChange={(e) => setEditCity(e.target.value)}
-                            className="w-full bg-gray-50 border-none rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-black"
-                            placeholder="City"
-                          />
-                           <input 
-                            type="text" 
-                            value={editPincode} 
-                            onChange={(e) => setEditPincode(e.target.value)}
-                            className="w-full bg-gray-50 border-none rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-black"
-                            placeholder="Pincode"
-                          />
-                          <input 
-                            type="text" 
-                            value={editState} 
-                            onChange={(e) => setEditState(e.target.value)}
-                            className="w-full bg-gray-50 border-none rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-black"
-                            placeholder="State"
-                          />
-                          <input 
-                            type="text" 
-                            value={editCountry} 
-                            onChange={(e) => setEditCountry(e.target.value)}
-                            className="w-full bg-gray-50 border-none rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-black"
-                            placeholder="Country"
-                          />
-                      </div>
-                    ) : (
-                      <p className="font-bold text-black leading-relaxed">{user.address || 'Not provided'}</p>
-                    )}
-                 </div>
-              </div>
-
-              {/* Editable Phone */}
-               <div className={`p-6 rounded-3xl flex items-start gap-4 transition-all col-span-1 md:col-span-2 ${isEditing ? 'bg-white border-2 border-black shadow-lg' : 'bg-[#F5F5F7] hover:bg-gray-100'}`}>
-                 <div className="p-3 bg-white rounded-full shadow-sm"><Phone size={20} /></div>
-                 <div className="w-full">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Phone</p>
-                    {isEditing ? (
-                       <div className="space-y-2">
-                          <input 
-                            type="tel" 
-                            value={editPhone} 
-                            onChange={(e) => setEditPhone(e.target.value)}
-                            className="w-full bg-gray-50 border-none rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-black"
-                            placeholder="Primary Phone"
-                          />
-                          <input 
-                            type="tel" 
-                            value={editAltPhone} 
-                            onChange={(e) => setEditAltPhone(e.target.value)}
-                            className="w-full bg-gray-50 border-none rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-black"
-                            placeholder="Alt Phone (Optional)"
-                          />
-                       </div>
-                    ) : (
-                      <>
-                        <p className="font-bold text-black">{user.phone_number || 'Not provided'}</p>
-                        {user.alternate_phone_number && (
-                          <p className="text-xs text-gray-500 mt-1">Alt: {user.alternate_phone_number}</p>
-                        )}
-                      </>
-                    )}
-                 </div>
-              </div>
-
-              <div className="bg-[#F5F5F7] p-6 rounded-3xl flex items-start gap-4 transition-colors">
-                 <div className="p-3 bg-white rounded-full shadow-sm"><Hash size={20} /></div>
-                 <div>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">User ID</p>
-                    <p className="font-bold text-black text-xs font-mono">{user.id}</p>
-                 </div>
-              </div>
-
-              <div className="bg-[#F5F5F7] p-6 rounded-3xl flex items-start gap-4 transition-colors">
-                 <div className="p-3 bg-white rounded-full shadow-sm"><Calendar size={20} /></div>
-                 <div>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Member Since</p>
-                    <p className="font-bold text-black">{joinDate}</p>
-                 </div>
-              </div>
-
-            </div>
-
-            {/* Action Buttons */}
-            <div className="pt-8 mt-8 border-t border-gray-100 flex flex-col md:flex-row gap-4">
-               {isEditing ? (
-                 <>
-                   <button 
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="flex-1 bg-black text-white py-4 rounded-full font-bold uppercase tracking-widest hover:bg-green-600 transition-all flex items-center justify-center gap-2 shadow-xl disabled:opacity-70"
-                   >
-                     {saving ? <Loader2 className="animate-spin" size={18}/> : <Save size={18} />} Save Changes
-                   </button>
-                   <button 
-                    onClick={handleCancel}
-                    disabled={saving}
-                    className="flex-1 bg-white border-2 border-gray-200 text-gray-500 py-4 rounded-full font-bold uppercase tracking-widest hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
-                   >
-                     Cancel
-                   </button>
-                 </>
-               ) : (
-                  <button 
+              <div className="space-y-2">
+                 <NavItem id="overview" icon={LayoutDashboard} label="Overview" />
+                 <NavItem id="orders" icon={Package} label="Orders" />
+                 <NavItem id="addresses" icon={MapPin} label="Addresses" />
+                 <NavItem id="settings" icon={Settings} label="Settings" />
+                 <button 
                     onClick={handleLogout}
-                    className="w-full bg-white border-2 border-red-100 text-red-500 py-4 rounded-full font-bold uppercase tracking-widest hover:bg-red-50 transition-all flex items-center justify-center gap-2"
-                  >
-                    <LogOut size={18} /> Sign Out
-                  </button>
-               )}
-            </div>
-          </div>
+                    className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 font-bold uppercase tracking-wider text-xs text-red-500 hover:bg-red-50 mt-4"
+                 >
+                    <LogOut size={18} />
+                    <span>Sign Out</span>
+                 </button>
+              </div>
+           </div>
+        </div>
+
+        {/* MAIN CONTENT */}
+        <div className="lg:col-span-9 px-4 lg:px-0">
+           {message && (
+              <div className={`mb-6 p-4 rounded-2xl text-xs font-bold text-center flex items-center justify-center gap-2 animate-fade-in-up ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                 {message.type === 'success' ? <div className="w-2 h-2 bg-green-500 rounded-full"></div> : <div className="w-2 h-2 bg-red-500 rounded-full"></div>}
+                 {message.text}
+              </div>
+           )}
+
+           {/* OVERVIEW TAB */}
+           {activeTab === 'overview' && (
+             <div className="space-y-8 animate-fade-in-up">
+                {/* Welcome Card */}
+                <div className="bg-black rounded-[2.5rem] p-8 lg:p-12 text-white relative overflow-hidden shadow-2xl">
+                   <div className="absolute top-0 right-0 w-64 h-64 bg-gold-500 rounded-full blur-[100px] opacity-20"></div>
+                   <div className="relative z-10">
+                      <p className="text-gold-500 text-xs font-bold uppercase tracking-[0.2em] mb-2">Membership Status</p>
+                      <h1 className="text-4xl lg:text-6xl font-heading font-black uppercase mb-6 leading-none">The Vault <br/>Access Granted</h1>
+                      <div className="flex gap-8">
+                         <div>
+                            <p className="text-3xl font-heading font-black">0</p>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Points Earned</p>
+                         </div>
+                         <div>
+                            <p className="text-3xl font-heading font-black">Tier 1</p>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Current Level</p>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+
+                {/* Quick Actions Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                   <button onClick={() => setActiveTab('orders')} className="bg-white p-6 rounded-[2rem] shadow-sm hover:shadow-xl transition-all text-left group">
+                      <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-4 group-hover:bg-black group-hover:text-white transition-colors">
+                         <Package size={24} />
+                      </div>
+                      <h3 className="font-heading font-black text-xl mb-1">Orders</h3>
+                      <p className="text-xs text-gray-400 font-bold">Track & Return</p>
+                   </button>
+                   <button onClick={() => setActiveTab('addresses')} className="bg-white p-6 rounded-[2rem] shadow-sm hover:shadow-xl transition-all text-left group">
+                      <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-4 group-hover:bg-black group-hover:text-white transition-colors">
+                         <MapPin size={24} />
+                      </div>
+                      <h3 className="font-heading font-black text-xl mb-1">Addresses</h3>
+                      <p className="text-xs text-gray-400 font-bold">Manage Shipping</p>
+                   </button>
+                   <button onClick={() => navigate('/shop')} className="bg-white p-6 rounded-[2rem] shadow-sm hover:shadow-xl transition-all text-left group">
+                      <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-4 group-hover:bg-black group-hover:text-white transition-colors">
+                         <Heart size={24} />
+                      </div>
+                      <h3 className="font-heading font-black text-xl mb-1">Wishlist</h3>
+                      <p className="text-xs text-gray-400 font-bold">Your Grails</p>
+                   </button>
+                </div>
+             </div>
+           )}
+
+           {/* ORDERS TAB */}
+           {activeTab === 'orders' && (
+              <div className="bg-white rounded-[2.5rem] p-8 lg:p-12 shadow-xl min-h-[500px] animate-fade-in-up">
+                 <h2 className="text-2xl font-heading font-black uppercase mb-8">Order History</h2>
+                 <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                       <ShoppingBag size={32} className="text-gray-300" />
+                    </div>
+                    <h3 className="text-xl font-heading font-black mb-2">No Orders Yet</h3>
+                    <p className="text-gray-400 text-sm font-medium mb-8 max-w-xs">Looks like you haven't made your first purchase. The collection is waiting.</p>
+                    <button onClick={() => navigate('/shop')} className="bg-black text-white px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-gold-500 transition-colors">
+                       Start Shopping
+                    </button>
+                 </div>
+              </div>
+           )}
+
+           {/* ADDRESSES TAB */}
+           {activeTab === 'addresses' && (
+              <div className="bg-white rounded-[2.5rem] p-8 lg:p-12 shadow-xl animate-fade-in-up">
+                 <div className="flex justify-between items-center mb-8">
+                    <h2 className="text-2xl font-heading font-black uppercase">Saved Addresses</h2>
+                    {!isEditingAddress && (
+                       <button onClick={() => setIsEditingAddress(true)} className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:text-gold-500 transition-colors">
+                          <Edit2 size={16} /> Edit Address
+                       </button>
+                    )}
+                 </div>
+
+                 {isEditingAddress ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
+                       <div className="col-span-1 md:col-span-2 space-y-2">
+                          <label className="text-[10px] font-black uppercase text-gray-400 pl-2">Address Line 1</label>
+                          <input type="text" value={addrForm.address1} onChange={e => setAddrForm({...addrForm, address1: e.target.value})} className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black" />
+                       </div>
+                       <div className="col-span-1 md:col-span-2 space-y-2">
+                          <label className="text-[10px] font-black uppercase text-gray-400 pl-2">Address Line 2</label>
+                          <input type="text" value={addrForm.address2} onChange={e => setAddrForm({...addrForm, address2: e.target.value})} className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black" />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase text-gray-400 pl-2">City</label>
+                          <input type="text" value={addrForm.city} onChange={e => setAddrForm({...addrForm, city: e.target.value})} className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black" />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase text-gray-400 pl-2">State</label>
+                          <input type="text" value={addrForm.state} onChange={e => setAddrForm({...addrForm, state: e.target.value})} className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black" />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase text-gray-400 pl-2">Pincode</label>
+                          <input type="text" value={addrForm.pincode} onChange={e => setAddrForm({...addrForm, pincode: e.target.value})} className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black" />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase text-gray-400 pl-2">Country</label>
+                          <input type="text" value={addrForm.country} onChange={e => setAddrForm({...addrForm, country: e.target.value})} className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black" />
+                       </div>
+                       <div className="col-span-1 md:col-span-2 flex gap-4 mt-4">
+                          <button onClick={handleSaveAddress} disabled={saving} className="flex-1 bg-black text-white py-3 rounded-xl font-bold uppercase text-xs tracking-widest hover:bg-green-600 transition-colors flex justify-center items-center gap-2">
+                             {saving ? <Loader2 className="animate-spin" size={16}/> : <Save size={16}/>} Save
+                          </button>
+                          <button onClick={() => setIsEditingAddress(false)} className="flex-1 bg-gray-100 text-gray-500 py-3 rounded-xl font-bold uppercase text-xs tracking-widest hover:bg-gray-200 transition-colors">Cancel</button>
+                       </div>
+                    </div>
+                 ) : (
+                    <div className="bg-[#F8F8F8] p-8 rounded-[2rem] border border-gray-100 relative group">
+                       <div className="absolute top-8 right-8 text-gold-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <MapPin size={24} />
+                       </div>
+                       <h3 className="font-heading font-black text-lg mb-4">Default Shipping</h3>
+                       <div className="space-y-1 text-sm font-medium text-gray-500">
+                          <p className="text-black font-bold text-base mb-2">{user.name}</p>
+                          <p>{user.address1}</p>
+                          {user.address2 && <p>{user.address2}</p>}
+                          <p>{user.city}, {user.state} {user.pincode}</p>
+                          <p>{user.country}</p>
+                          <p className="mt-4 text-black font-bold">Phone: {user.phone_number}</p>
+                       </div>
+                    </div>
+                 )}
+              </div>
+           )}
+
+           {/* SETTINGS TAB */}
+           {activeTab === 'settings' && (
+              <div className="bg-white rounded-[2.5rem] p-8 lg:p-12 shadow-xl animate-fade-in-up">
+                 <h2 className="text-2xl font-heading font-black uppercase mb-8">Profile Settings</h2>
+                 
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Profile Form */}
+                    <div className="col-span-2">
+                        <div className="flex justify-between items-center mb-6">
+                           <h3 className="font-bold text-sm uppercase tracking-widest text-gray-400">Personal Details</h3>
+                           {!isEditingProfile && (
+                              <button onClick={() => setIsEditingProfile(true)} className="text-xs font-bold uppercase tracking-widest hover:text-gold-500 transition-colors underline">Edit</button>
+                           )}
+                        </div>
+                        
+                        <div className="bg-[#F8F8F8] p-8 rounded-[2rem] space-y-6">
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div className="space-y-2">
+                                 <label className="text-[10px] font-black uppercase text-gray-400 pl-2">Full Name</label>
+                                 <input 
+                                    type="text" 
+                                    value={isEditingProfile ? profileForm.name : user.name} 
+                                    onChange={e => setProfileForm({...profileForm, name: e.target.value})}
+                                    disabled={!isEditingProfile}
+                                    className={`w-full bg-white border-none rounded-xl px-4 py-3 text-sm font-bold ${isEditingProfile ? 'ring-1 ring-gray-200 focus:ring-black' : 'text-gray-500'}`} 
+                                 />
+                              </div>
+                              <div className="space-y-2">
+                                 <label className="text-[10px] font-black uppercase text-gray-400 pl-2">Email (Cannot Change)</label>
+                                 <input 
+                                    type="text" 
+                                    value={user.email} 
+                                    disabled 
+                                    className="w-full bg-gray-100 border-none rounded-xl px-4 py-3 text-sm font-bold text-gray-400 cursor-not-allowed" 
+                                 />
+                              </div>
+                              <div className="space-y-2">
+                                 <label className="text-[10px] font-black uppercase text-gray-400 pl-2">Phone</label>
+                                 <input 
+                                    type="text" 
+                                    value={isEditingProfile ? profileForm.phone : user.phone_number} 
+                                    onChange={e => setProfileForm({...profileForm, phone: e.target.value})}
+                                    disabled={!isEditingProfile}
+                                    className={`w-full bg-white border-none rounded-xl px-4 py-3 text-sm font-bold ${isEditingProfile ? 'ring-1 ring-gray-200 focus:ring-black' : 'text-gray-500'}`} 
+                                 />
+                              </div>
+                              <div className="space-y-2">
+                                 <label className="text-[10px] font-black uppercase text-gray-400 pl-2">Alt Phone</label>
+                                 <input 
+                                    type="text" 
+                                    value={isEditingProfile ? profileForm.altPhone : (user.alternate_phone_number || 'Not Set')} 
+                                    onChange={e => setProfileForm({...profileForm, altPhone: e.target.value})}
+                                    disabled={!isEditingProfile}
+                                    className={`w-full bg-white border-none rounded-xl px-4 py-3 text-sm font-bold ${isEditingProfile ? 'ring-1 ring-gray-200 focus:ring-black' : 'text-gray-500'}`} 
+                                 />
+                              </div>
+                           </div>
+
+                           {isEditingProfile && (
+                              <div className="flex gap-4 pt-2">
+                                 <button onClick={handleSaveProfile} disabled={saving} className="bg-black text-white px-8 py-3 rounded-xl font-bold uppercase text-xs tracking-widest hover:bg-green-600 transition-colors flex items-center gap-2">
+                                    {saving ? <Loader2 className="animate-spin" size={16}/> : <Save size={16}/>} Save Details
+                                 </button>
+                                 <button onClick={() => setIsEditingProfile(false)} className="bg-white border border-gray-200 text-gray-500 px-8 py-3 rounded-xl font-bold uppercase text-xs tracking-widest hover:bg-gray-50 transition-colors">Cancel</button>
+                              </div>
+                           )}
+                        </div>
+                    </div>
+
+                    {/* Account Stats */}
+                    <div className="col-span-2">
+                       <h3 className="font-bold text-sm uppercase tracking-widest text-gray-400 mb-6">Account Meta</h3>
+                       <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-[#F8F8F8] p-6 rounded-[1.5rem] flex items-center gap-4">
+                             <div className="p-3 bg-white rounded-full shadow-sm"><User size={20}/></div>
+                             <div>
+                                <p className="text-[10px] font-black uppercase text-gray-400">User ID</p>
+                                <p className="font-bold text-xs truncate max-w-[150px]">{user.id}</p>
+                             </div>
+                          </div>
+                          <div className="bg-[#F8F8F8] p-6 rounded-[1.5rem] flex items-center gap-4">
+                             <div className="p-3 bg-white rounded-full shadow-sm"><Settings size={20}/></div>
+                             <div>
+                                <p className="text-[10px] font-black uppercase text-gray-400">Joined</p>
+                                <p className="font-bold text-xs">{new Date(user.created_at).toLocaleDateString()}</p>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+           )}
+
         </div>
       </div>
     </div>
