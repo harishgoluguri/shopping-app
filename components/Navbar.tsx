@@ -58,15 +58,9 @@ const Navbar: React.FC = () => {
 
   return (
     <>
-      {/* 1. TOP ANNOUNCEMENT BAR */}
-      <div className={`hidden lg:flex justify-between items-center bg-black text-white px-12 py-2.5 text-[10px] font-bold uppercase tracking-[0.2em] transition-transform duration-300 z-[60] relative ${scrolled ? '-translate-y-full absolute top-0 w-full' : 'translate-y-0 relative'}`}>
-         <span>Complimentary Shipping on Orders Over ₹5000</span>
-         <span>Master Copy Quality Guaranteed</span>
-      </div>
-
       {/* 2. MAIN NAVIGATION */}
       <nav 
-        className={`fixed top-0 w-full z-50 transition-all duration-500 border-b ${navBgClass} ${scrolled ? 'lg:top-0' : 'lg:top-[35px]'}`}
+        className={`fixed top-0 w-full z-50 transition-all duration-500 border-b ${navBgClass}`}
         onMouseLeave={() => setShopHovered(false)}
       >
         <div className="max-w-[1800px] mx-auto px-6 lg:px-12">

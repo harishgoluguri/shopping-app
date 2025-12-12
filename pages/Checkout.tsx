@@ -7,10 +7,12 @@ import {
   ChevronDown, 
   ChevronUp, 
   ChevronRight, 
-  ShoppingBag, 
   Lock, 
-  MapPin,
-  ArrowLeft
+  ArrowLeft,
+  CheckCircle,
+  QrCode,
+  AlertCircle,
+  Copy
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -19,6 +21,9 @@ const Checkout: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isSummaryOpen, setSummaryOpen] = useState(false);
+  
+  // Payment State
+  const [utrNumber, setUtrNumber] = useState('');
 
   // Redirect if not logged in
   useEffect(() => {
@@ -29,6 +34,14 @@ const Checkout: React.FC = () => {
 
   const handleWhatsAppOrder = () => {
     if (!user) return;
+    
+    // Validation: Require UTR Number
+    if (!utrNumber.trim()) {
+        const paymentSection = document.getElementById('payment-section');
+        paymentSection?.scrollIntoView({ behavior: 'smooth' });
+        alert("Please enter the UTR/Transaction ID to proceed.");
+        return;
+    }
 
     let message = `
 *NEW ORDER REQUEST* 🛒
@@ -59,7 +72,10 @@ Discount (${appliedCoupon.code}): -${CURRENCY}${discount}
 
     message += `
 ------------------
-Please confirm availability and payment details.`;
+*Payment Details:*
+Transaction ID / UTR: ${utrNumber}
+    
+(Please verify this transaction)`;
 
     const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
@@ -72,7 +88,6 @@ Please confirm availability and payment details.`;
     <div className="min-h-screen bg-white lg:flex flex-row-reverse font-sans text-[#333]">
       
       {/* RIGHT COLUMN - ORDER SUMMARY */}
-      {/* On desktop, this is on the right. On mobile, it's at the top. */}
       <div className={`lg:w-[45%] bg-[#FAFAFA] border-b lg:border-b-0 lg:border-l border-gray-200 lg:min-h-screen flex flex-col`}>
          
          {/* Mobile Toggle Bar */}
@@ -200,7 +215,7 @@ Please confirm availability and payment details.`;
                 </div>
 
                 {/* Payment Method */}
-                <div>
+                <div id="payment-section">
                     <h2 className="text-lg font-heading font-black uppercase tracking-tight mb-2">Payment</h2>
                     <p className="text-xs text-gray-400 font-medium mb-4 flex items-center gap-1">
                         <Lock size={12} /> All transactions are secure and encrypted.
@@ -212,23 +227,76 @@ Please confirm availability and payment details.`;
                                 <div className="w-5 h-5 rounded-full bg-black flex items-center justify-center shadow-sm">
                                     <div className="w-2 h-2 bg-white rounded-full"></div>
                                 </div>
-                                <span className="text-sm font-bold text-[#111]">WhatsApp Concierge Checkout</span>
+                                <span className="text-sm font-bold text-[#111]">Scan to Pay (UPI/QR)</span>
                             </div>
-                            <MessageCircle size={20} className="text-[#25D366]" />
+                            <QrCode size={20} className="text-black" />
                         </div>
-                        <div className="p-8 bg-white text-center">
-                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
-                                <ShoppingBag size={24} className="text-gray-400"/>
+                        
+                        <div className="p-8 bg-white flex flex-col items-center">
+                            {/* QR CODE DISPLAY */}
+                            <div className="mb-6 text-center">
+                                <div className="bg-white p-4 rounded-xl border-2 border-dashed border-gray-300 mb-3 inline-block">
+                                    {/* REPLACE THE SRC BELOW WITH YOUR ACTUAL PAYMENT QR CODE */}
+                                    <img 
+                                        src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=sdgsneakers@upi&pn=SDGSneakers" 
+                                        alt="Payment QR" 
+                                        className="w-40 h-40 object-contain"
+                                    />
+                                </div>
+
+                                {/* Account Details */}
+                                <div className="flex flex-col gap-1 mb-4">
+                                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Account Name</p>
+                                   <p className="text-sm font-black text-black mb-2">SDG Sneakers</p>
+                                   
+                                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">UPI ID</p>
+                                   <div className="flex items-center justify-center gap-2 bg-gray-100 py-1.5 px-4 rounded-full mx-auto w-fit">
+                                     <p className="text-sm font-mono font-bold text-black tracking-wide">sdgsneakers@upi</p>
+                                   </div>
+                                </div>
+
+                                <div className="my-4">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Payable Amount</p>
+                                    <p className="text-3xl font-heading font-black text-black">{CURRENCY}{cartTotal.toLocaleString()}</p>
+                                </div>
                             </div>
-                            <p className="text-sm text-gray-500 font-medium max-w-xs mx-auto mb-4 leading-relaxed">
-                                To ensure authentic quality verification and personalized service, we complete all orders via our VIP WhatsApp line.
-                            </p>
-                            <div className="flex flex-wrap justify-center gap-2">
-                                {['UPI', 'Bank Transfer', 'COD Available'].map(tag => (
-                                    <span key={tag} className="bg-gray-100 text-gray-600 px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">
-                                        {tag}
-                                    </span>
-                                ))}
+                            
+                            {/* Warning Note */}
+                             <div className="w-full bg-red-50 border border-red-100 rounded-xl p-4 mb-6 flex items-start gap-3">
+                                <div className="bg-red-100 p-1.5 rounded-full shrink-0">
+                                    <AlertCircle size={16} className="text-red-600" />
+                                </div>
+                                <div className="text-left">
+                                    <p className="text-[11px] font-bold text-red-800 uppercase tracking-wide mb-1">Payment Warning</p>
+                                    <p className="text-[10px] text-red-600 font-medium leading-relaxed">
+                                        Please ensure you transfer the exact amount. Sending a lower amount may result in loss of funds. 
+                                        Providing a fake UTR/Transaction ID will result in an <span className="underline font-bold">immediate and permanent account ban</span>.
+                                    </p>
+                                </div>
+                             </div>
+
+                            <div className="w-full h-[1px] bg-gray-100 mb-6"></div>
+
+                            {/* UTR INPUT SECTION */}
+                            <div className="w-full">
+                                <div className="flex justify-between items-center mb-3">
+                                    <span className="text-xs font-bold uppercase tracking-widest text-black">Enter UTR / Transaction ID</span>
+                                    <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-1 rounded">* Required</span>
+                                </div>
+                                
+                                <input 
+                                    type="text" 
+                                    value={utrNumber}
+                                    onChange={(e) => setUtrNumber(e.target.value)}
+                                    placeholder="e.g. 123456789012"
+                                    className="w-full bg-[#F9F9F9] border-2 border-gray-200 rounded-2xl px-5 py-4 font-bold text-black placeholder-gray-400 focus:bg-white focus:border-black focus:outline-none transition-all"
+                                />
+                                <div className="flex items-start gap-2 mt-3">
+                                    <CheckCircle size={14} className="text-green-600 mt-0.5 shrink-0" />
+                                    <p className="text-[10px] text-gray-400 leading-tight">
+                                        After making the payment via UPI or Scanning the QR code above, please find the 12-digit UTR number or Transaction ID in your payment app and enter it here for verification.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -238,10 +306,14 @@ Please confirm availability and payment details.`;
                 <div className="pt-4">
                     <button 
                         onClick={handleWhatsAppOrder}
-                        className="w-full bg-[#25D366] hover:bg-[#20b957] text-white py-5 rounded-2xl font-black uppercase tracking-[0.15em] text-sm shadow-xl shadow-green-100 hover:shadow-green-200 hover:-translate-y-1 transition-all active:translate-y-0 active:scale-[0.98] flex items-center justify-center gap-3"
+                        disabled={!utrNumber.trim()}
+                        className={`w-full py-5 rounded-2xl font-black uppercase tracking-[0.15em] text-sm shadow-xl transition-all active:translate-y-0 active:scale-[0.98] flex items-center justify-center gap-3
+                        ${utrNumber.trim() 
+                            ? 'bg-[#25D366] hover:bg-[#20b957] text-white shadow-green-100 hover:shadow-green-200 hover:-translate-y-1' 
+                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
                     >
-                        <MessageCircle size={20} fill="white" />
-                        Complete Order
+                         <MessageCircle size={20} fill={utrNumber.trim() ? "white" : "none"} /> 
+                         {utrNumber.trim() ? "Complete Order" : "Enter UTR to Continue"}
                     </button>
                     
                     <Link to="/cart" className="flex items-center justify-center gap-2 text-xs font-bold text-gray-400 hover:text-black mt-6 transition-colors">
