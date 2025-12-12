@@ -12,7 +12,8 @@ import {
   CheckCircle,
   QrCode,
   AlertCircle,
-  Copy
+  Copy,
+  Check
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -24,6 +25,7 @@ const Checkout: React.FC = () => {
   
   // Payment State
   const [utrNumber, setUtrNumber] = useState('');
+  const [copied, setCopied] = useState(false);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -31,6 +33,12 @@ const Checkout: React.FC = () => {
       navigate('/login');
     }
   }, [user, navigate]);
+
+  const handleCopyUpi = () => {
+    navigator.clipboard.writeText('ursharishreddy@oksbi');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleWhatsAppOrder = () => {
     if (!user) return;
@@ -236,9 +244,9 @@ Transaction ID / UTR: ${utrNumber}
                             {/* QR CODE DISPLAY */}
                             <div className="mb-6 text-center">
                                 <div className="bg-white p-4 rounded-xl border-2 border-dashed border-gray-300 mb-3 inline-block">
-                                    {/* REPLACE THE SRC BELOW WITH YOUR ACTUAL PAYMENT QR CODE */}
+                                    {/* UPDATED QR CODE IMAGE */}
                                     <img 
-                                        src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=sdgsneakers@upi&pn=SDGSneakers" 
+                                        src="https://imvagofypivmtbuylqqo.supabase.co/storage/v1/object/public/product_images.image_url/WhatsApp%20Image%202025-12-12%20at%2020.40.03.png" 
                                         alt="Payment QR" 
                                         className="w-40 h-40 object-contain"
                                     />
@@ -247,12 +255,18 @@ Transaction ID / UTR: ${utrNumber}
                                 {/* Account Details */}
                                 <div className="flex flex-col gap-1 mb-4">
                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Account Name</p>
-                                   <p className="text-sm font-black text-black mb-2">SDG Sneakers</p>
+                                   <p className="text-sm font-black text-black mb-2">Goluguri Sasi</p>
                                    
                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">UPI ID</p>
-                                   <div className="flex items-center justify-center gap-2 bg-gray-100 py-1.5 px-4 rounded-full mx-auto w-fit">
-                                     <p className="text-sm font-mono font-bold text-black tracking-wide">sdgsneakers@upi</p>
+                                   <div 
+                                      className="flex items-center justify-center gap-2 bg-gray-100 py-2 px-4 rounded-full mx-auto w-fit cursor-pointer hover:bg-gray-200 transition-colors active:scale-95 select-none"
+                                      onClick={handleCopyUpi}
+                                      title="Click to copy"
+                                   >
+                                     <p className="text-sm font-mono font-bold text-black tracking-wide">ursharishreddy@oksbi</p>
+                                     {copied ? <Check size={14} className="text-green-600"/> : <Copy size={14} className="text-gray-500"/>}
                                    </div>
+                                   {copied && <p className="text-[10px] text-green-600 font-bold mt-1 animate-fade-in-up">Copied to clipboard!</p>}
                                 </div>
 
                                 <div className="my-4">

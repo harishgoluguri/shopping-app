@@ -1,14 +1,20 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useProducts } from '../context/ProductContext';
 import { CURRENCY } from '../constants';
-import { Trash2, ArrowRight, Minus, Plus, Tag, X, ShoppingBag, ShieldCheck } from 'lucide-react';
+import { Trash2, ArrowRight, Minus, Plus, Tag, X, ShoppingBag, ShieldCheck, Truck, Sparkles } from 'lucide-react';
+import ProductCard from '../components/ProductCard';
 
 const Cart: React.FC = () => {
   const { cart, removeFromCart, updateQuantity, cartTotal, cartSubtotal, discount, applyCoupon, removeCoupon, appliedCoupon } = useCart();
+  const { products } = useProducts();
   const navigate = useNavigate();
   const [couponCode, setCouponCode] = useState('');
   const [couponMsg, setCouponMsg] = useState<{type: 'success' | 'error', text: string} | null>(null);
+
+  // Get recommendations (products not in cart)
+  const recommendations = products.filter(p => !cart.some(c => c.id === p.id)).slice(0, 4);
 
   const handleApplyCoupon = () => {
     if (!couponCode.trim()) return;
@@ -25,17 +31,29 @@ const Cart: React.FC = () => {
 
   if (cart.length === 0) {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center bg-white px-6 text-center pt-20">
-        <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-           <ShoppingBag size={32} className="text-gray-300" strokeWidth={1.5} />
+      <div className="min-h-screen bg-white pt-24 pb-20">
+        <div className="max-w-[1600px] mx-auto px-6 lg:px-12 flex flex-col items-center text-center">
+            <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 animate-bounce-slow">
+               <ShoppingBag size={32} className="text-gray-300" strokeWidth={1.5} />
+            </div>
+            <h2 className="text-4xl font-heading font-black mb-4 text-black uppercase tracking-tight">Your Bag is Empty</h2>
+            <p className="text-gray-400 font-medium mb-10 max-w-md mx-auto leading-relaxed">
+              Invest in your style. Explore our latest arrivals and find your next statement piece.
+            </p>
+            <Link to="/shop" className="bg-black text-white px-12 py-5 rounded-full text-xs font-black uppercase tracking-[0.2em] hover:bg-[#D4AF37] hover:text-black transition-all shadow-xl hover:scale-105 mb-24">
+              Explore Collection
+            </Link>
+
+            {/* Trending Section for Empty Cart */}
+            <div className="w-full text-left border-t border-gray-100 pt-16">
+                 <h3 className="text-2xl font-heading font-black uppercase mb-8">Trending Now</h3>
+                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    {recommendations.map(product => (
+                        <ProductCard key={product.id} product={product} />
+                    ))}
+                 </div>
+            </div>
         </div>
-        <h2 className="text-4xl font-heading font-black mb-4 text-black uppercase tracking-tight">Your Bag is Empty</h2>
-        <p className="text-gray-400 font-medium mb-10 max-w-md mx-auto leading-relaxed">
-          Invest in your style. Explore our latest arrivals and find your next statement piece.
-        </p>
-        <Link to="/shop" className="bg-black text-white px-12 py-5 rounded-full text-xs font-black uppercase tracking-[0.2em] hover:bg-[#D4AF37] hover:text-black transition-all shadow-xl hover:scale-105">
-          Explore Collection
-        </Link>
       </div>
     );
   }
@@ -43,7 +61,7 @@ const Cart: React.FC = () => {
   return (
     <div className="bg-white min-h-screen pt-24 pb-40 lg:pb-24">
       <div className="max-w-[1600px] mx-auto px-6 lg:px-12">
-        <h1 className="text-3xl lg:text-5xl font-heading font-black mb-12 lg:mb-16 mt-4 uppercase tracking-tighter">
+        <h1 className="text-3xl lg:text-5xl font-heading font-black mb-8 lg:mb-12 mt-4 uppercase tracking-tighter">
           Shopping Bag <span className="text-gray-300 ml-2 text-2xl lg:text-4xl align-top">({cart.length})</span>
         </h1>
         
@@ -51,13 +69,29 @@ const Cart: React.FC = () => {
           
           {/* Cart Items List */}
           <div className="flex-1 space-y-0">
+            
+            {/* Free Shipping Banner */}
+            <div className="bg-[#F9F9F9] rounded-2xl p-4 mb-8 flex items-center gap-4 border border-gray-100 relative overflow-hidden">
+                <div className="absolute top-0 left-0 h-full w-1 bg-green-500"></div>
+                <div className="p-2 bg-white rounded-full shadow-sm">
+                    <Truck size={20} className="text-black" />
+                </div>
+                <div>
+                    <p className="text-xs font-bold uppercase tracking-wide text-black">Free Express Shipping Unlocked</p>
+                    <p className="text-[10px] text-gray-400 font-medium">Your order qualifies for priority dispatch.</p>
+                </div>
+                <div className="ml-auto">
+                    <CheckCircle size={20} className="text-green-500" />
+                </div>
+            </div>
+
             {cart.map((item, index) => {
               const displayImage = item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/150';
               
               return (
-                <div key={`${item.id}-${item.selectedSize}`} className={`flex gap-6 lg:gap-10 py-10 group ${index !== cart.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                <div key={`${item.id}-${item.selectedSize}`} className={`flex gap-4 lg:gap-10 py-8 lg:py-10 group ${index !== cart.length - 1 ? 'border-b border-gray-100' : ''}`}>
                   {/* Image */}
-                  <Link to={`/product/${item.id}`} className="w-32 h-40 lg:w-48 lg:h-56 bg-[#F9F9F9] rounded-2xl flex-shrink-0 flex items-center justify-center p-4 overflow-hidden relative">
+                  <Link to={`/product/${item.id}`} className="w-28 h-36 lg:w-48 lg:h-56 bg-[#F9F9F9] rounded-2xl flex-shrink-0 flex items-center justify-center p-2 lg:p-4 overflow-hidden relative">
                     <img src={displayImage} alt={item.title} className="w-full h-full object-contain mix-blend-multiply transition-transform duration-700 group-hover:scale-110" />
                   </Link>
                   
@@ -65,32 +99,35 @@ const Cart: React.FC = () => {
                   <div className="flex-1 flex flex-col justify-between py-1 lg:py-2">
                     <div>
                       <div className="flex justify-between items-start gap-4 mb-2">
-                        <Link to={`/product/${item.id}`} className="text-lg lg:text-2xl font-heading font-bold text-black leading-none uppercase tracking-wide hover:text-gray-600 transition-colors">
+                        <Link to={`/product/${item.id}`} className="text-base lg:text-2xl font-heading font-bold text-black leading-tight lg:leading-none uppercase tracking-wide hover:text-gray-600 transition-colors line-clamp-2">
                           {item.title}
                         </Link>
-                        <span className="font-heading font-bold text-lg lg:text-xl whitespace-nowrap">{CURRENCY}{(item.price * item.quantity).toLocaleString()}</span>
+                        <span className="font-heading font-bold text-base lg:text-xl whitespace-nowrap">{CURRENCY}{(item.price * item.quantity).toLocaleString()}</span>
                       </div>
-                      <p className="text-[10px] lg:text-xs text-gray-400 font-bold uppercase tracking-widest">{item.category} / Size {item.selectedSize}</p>
+                      <p className="text-[10px] lg:text-xs text-gray-400 font-bold uppercase tracking-widest mb-1">{item.category}</p>
+                      <div className="inline-flex items-center gap-2 bg-gray-50 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider text-black">
+                         <span>Size: {item.selectedSize}</span>
+                      </div>
                       
-                      <div className="mt-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-50 w-fit px-2 py-1 rounded">
+                      <div className="mt-3 lg:mt-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-50 w-fit px-2 py-1 rounded">
                          <ShieldCheck size={12}/> Authenticity Guaranteed
                       </div>
                     </div>
                     
-                    <div className="flex justify-between items-end mt-6">
+                    <div className="flex justify-between items-end mt-4 lg:mt-6">
                       {/* Qty Stepper - Premium */}
-                      <div className="flex items-center border border-gray-200 rounded-full h-10 lg:h-12 w-32 lg:w-40 px-1 relative">
+                      <div className="flex items-center border border-gray-200 rounded-full h-10 lg:h-12 w-28 lg:w-40 px-1 relative bg-white">
                           <button 
                             onClick={() => updateQuantity(item.id, item.selectedSize, -1)} 
                             disabled={item.quantity <= 1} 
-                            className="w-10 h-full flex items-center justify-center text-black hover:bg-gray-50 rounded-full transition-colors disabled:opacity-30"
+                            className="w-8 lg:w-10 h-full flex items-center justify-center text-black hover:bg-gray-50 rounded-full transition-colors disabled:opacity-30"
                           >
                             <Minus size={14} strokeWidth={2}/>
                           </button>
                           <span className="flex-1 text-center font-bold text-sm">{item.quantity}</span>
                           <button 
                             onClick={() => updateQuantity(item.id, item.selectedSize, 1)} 
-                            className="w-10 h-full flex items-center justify-center text-black hover:bg-gray-50 rounded-full transition-colors"
+                            className="w-8 lg:w-10 h-full flex items-center justify-center text-black hover:bg-gray-50 rounded-full transition-colors"
                           >
                             <Plus size={14} strokeWidth={2}/>
                           </button>
@@ -98,9 +135,10 @@ const Cart: React.FC = () => {
 
                       <button 
                         onClick={() => removeFromCart(item.id, item.selectedSize)}
-                        className="text-[10px] lg:text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-red-500 transition-colors underline decoration-1 underline-offset-4"
+                        className="p-2 text-gray-400 hover:text-red-500 transition-colors hover:bg-red-50 rounded-full"
+                        title="Remove Item"
                       >
-                        Remove
+                        <Trash2 size={18} />
                       </button>
                     </div>
                   </div>
@@ -112,7 +150,7 @@ const Cart: React.FC = () => {
           {/* Desktop Summary Card */}
           <div className="hidden lg:block lg:w-[450px] flex-shrink-0">
             <div className="bg-[#F9F9F9] p-10 lg:p-12 rounded-[2.5rem] sticky top-32">
-              <h2 className="text-2xl font-heading font-black mb-8 uppercase tracking-tight">Summary</h2>
+              <h2 className="text-2xl font-heading font-black mb-8 uppercase tracking-tight">Order Summary</h2>
               
               {/* Coupon Input */}
               <div className="mb-8 relative">
@@ -186,6 +224,21 @@ const Cart: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* You Might Also Like Section */}
+        {recommendations.length > 0 && (
+            <div className="mt-24 pt-16 border-t border-gray-100">
+                <div className="flex items-center gap-3 mb-10">
+                    <Sparkles size={20} className="text-gold-500" />
+                    <h2 className="text-2xl md:text-3xl font-heading font-black uppercase tracking-tight">You Might Also Like</h2>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    {recommendations.map(product => (
+                        <ProductCard key={product.id} product={product} />
+                    ))}
+                </div>
+            </div>
+        )}
       </div>
 
       {/* Mobile Sticky Summary Footer */}
@@ -237,3 +290,23 @@ const Cart: React.FC = () => {
 };
 
 export default Cart;
+
+function CheckCircle({ size, className }: { size: number, className: string }) {
+    return (
+        <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            width={size} 
+            height={size} 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            className={className}
+        >
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+    )
+}
