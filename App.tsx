@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
@@ -16,8 +15,6 @@ import Profile from './pages/Profile';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { ProductProvider } from './context/ProductContext';
-import { MessageCircle } from 'lucide-react';
-import { WHATSAPP_NUMBER } from './constants';
 
 // Scroll to top component
 const ScrollToTop = () => {
@@ -53,17 +50,6 @@ const App: React.FC = () => {
                 </Routes>
               </main>
               <Footer />
-              
-              {/* Global Floating WhatsApp Button */}
-              <a 
-                href={`https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}`}
-                target="_blank" 
-                rel="noreferrer"
-                className="fixed bottom-6 right-6 z-40 bg-[#25D366] text-white p-4 rounded-full shadow-xl hover:scale-110 transition-all duration-300 flex items-center justify-center border-4 border-white"
-                aria-label="Chat on WhatsApp"
-              >
-                <MessageCircle size={28} fill="white" />
-              </a>
             </div>
           </HashRouter>
         </CartProvider>

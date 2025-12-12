@@ -55,7 +55,6 @@ const Navbar: React.FC = () => {
     
   const textColorClass = isTransparent ? 'text-white' : 'text-black';
   const iconColorClass = isTransparent ? 'text-white' : 'text-black';
-  const logoColorClass = isTransparent ? 'text-white' : 'text-black';
 
   return (
     <>
@@ -103,9 +102,11 @@ const Navbar: React.FC = () => {
             {/* CENTER: Logo */}
             <div className="flex-1 flex justify-center">
                 <Link to="/" className="group">
-                  <span className={`font-heading text-3xl lg:text-4xl font-black tracking-tighter transition-colors select-none ${logoColorClass}`}>
-                    SDG<span className={isTransparent ? 'text-white' : 'text-black'}>SNEAKERS</span>
-                  </span>
+                  <img 
+                    src="https://imvagofypivmtbuylqqo.supabase.co/storage/v1/object/public/product_images.image_url/75655319216.png" 
+                    alt="SDG Sneakers" 
+                    className="h-12 lg:h-16 w-auto object-contain transition-transform duration-300 hover:scale-105"
+                  />
                 </Link>
             </div>
 
