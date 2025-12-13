@@ -4,7 +4,7 @@ import { COUPONS } from '../constants';
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: Product, size: string) => void;
+  addToCart: (product: Product, size: string, quantity?: number) => void;
   removeFromCart: (productId: string, size: string) => void;
   updateQuantity: (productId: string, size: string, delta: number) => void;
   clearCart: () => void;
@@ -66,17 +66,44 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const cartTotal = Math.max(0, cartSubtotal - discount);
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const addToCart = (product: Product, size: string) => {
+  const addToCart = (product: Product, size: string, quantity: number = 1) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id && item.selectedSize === size);
+      const stock = product.sizes[size] || 0;
+
       if (existing) {
+        const newTotal = existing.quantity + quantity;
+        
+        if (newTotal > stock) {
+            alert(`Sorry, we only have ${stock} units of size ${size} in stock.`);
+            // Cap at max stock if they tried to add more
+            if (existing.quantity < stock) {
+                return prev.map((item) =>
+                  item.id === product.id && item.selectedSize === size
+                    ? { ...item, quantity: stock }
+                    : item
+                );
+            }
+            return prev;
+        }
+
         return prev.map((item) =>
           item.id === product.id && item.selectedSize === size
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: existing.quantity + quantity }
             : item
         );
       }
-      return [...prev, { ...product, selectedSize: size, quantity: 1 }];
+      
+      // New Item Check
+      if (quantity > stock) {
+          alert(`Sorry, we only have ${stock} units of size ${size} in stock.`);
+          if (stock > 0) {
+             return [...prev, { ...product, selectedSize: size, quantity: stock }];
+          }
+          return prev;
+      }
+
+      return [...prev, { ...product, selectedSize: size, quantity }];
     });
   };
 
@@ -84,8 +111,16 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setCart((prev) =>
       prev.map((item) => {
         if (item.id === productId && item.selectedSize === size) {
-          const newQuantity = Math.max(1, item.quantity + delta);
-          return { ...item, quantity: newQuantity };
+          const stock = item.sizes[size] || 0;
+          const newQuantity = item.quantity + delta;
+
+          if (newQuantity > stock) {
+             alert(`Sorry, maximum stock limit reached for this item.`);
+             return { ...item, quantity: stock };
+          }
+
+          const finalQuantity = Math.max(1, newQuantity);
+          return { ...item, quantity: finalQuantity };
         }
         return item;
       })

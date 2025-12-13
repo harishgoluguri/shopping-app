@@ -34,9 +34,8 @@ const Footer: React.FC = () => {
             <h4 className="font-heading font-bold text-lg uppercase tracking-widest mb-6 text-white">Collections</h4>
             <ul className="space-y-4 text-sm font-medium text-gray-400">
               <li><Link to="/shop?category=Sneakers" className="hover:text-gold-500 transition-colors flex items-center gap-2 group"><span className="w-0 group-hover:w-2 h-[1px] bg-gold-500 transition-all"></span> Sneakers</Link></li>
+              <li><Link to="/shop?category=Running" className="hover:text-gold-500 transition-colors flex items-center gap-2 group"><span className="w-0 group-hover:w-2 h-[1px] bg-gold-500 transition-all"></span> Running</Link></li>
               <li><Link to="/shop?category=Slides" className="hover:text-gold-500 transition-colors flex items-center gap-2 group"><span className="w-0 group-hover:w-2 h-[1px] bg-gold-500 transition-all"></span> Slides</Link></li>
-              <li><Link to="/shop" className="hover:text-gold-500 transition-colors flex items-center gap-2 group"><span className="w-0 group-hover:w-2 h-[1px] bg-gold-500 transition-all"></span> New Arrivals</Link></li>
-              <li><Link to="/shop" className="hover:text-gold-500 transition-colors flex items-center gap-2 group"><span className="w-0 group-hover:w-2 h-[1px] bg-gold-500 transition-all"></span> Best Sellers</Link></li>
             </ul>
           </div>
 

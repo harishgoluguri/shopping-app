@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   User, Mail, MapPin, Phone, LogOut, Loader2, 
   Package, LayoutDashboard, Settings, Heart, 
-  ChevronRight, CreditCard, Edit2, Save, X, ShoppingBag 
+  ChevronRight, CreditCard, Edit2, Save, X, ShoppingBag, Trophy
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { CURRENCY } from '../constants';
@@ -90,8 +90,17 @@ const Profile: React.FC = () => {
     }
   };
 
+  const getLevelInfo = (points: number = 0) => {
+    if (points <= 1000) return { name: 'Silver', color: 'text-gray-400', bg: 'bg-gray-100', next: 1000 };
+    if (points <= 3000) return { name: 'Gold', color: 'text-gold-500', bg: 'bg-gold-50', next: 3000 };
+    if (points <= 5000) return { name: 'Platinum', color: 'text-cyan-500', bg: 'bg-cyan-50', next: 5000 };
+    return { name: 'Diamond', color: 'text-purple-500', bg: 'bg-purple-50', next: null };
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-white"><Loader2 className="animate-spin text-black" size={40} /></div>;
   if (!user) return null;
+
+  const level = getLevelInfo(user.points);
 
   const NavItem = ({ id, icon: Icon, label }: { id: Tab, icon: any, label: string }) => (
     <button 
@@ -116,7 +125,10 @@ const Profile: React.FC = () => {
                     {user.name?.charAt(0).toUpperCase()}
                  </div>
                  <h2 className="text-xl font-heading font-black uppercase text-center">{user.name}</h2>
-                 <p className="text-[10px] font-bold text-gold-600 uppercase tracking-widest bg-gold-50 px-3 py-1 rounded-full mt-2">Platinum Member</p>
+                 <div className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest ${level.bg} px-3 py-1 rounded-full mt-2`}>
+                    <Trophy size={12} className={level.color} />
+                    <span className={level.color}>{level.name} Member</span>
+                 </div>
               </div>
               
               <div className="space-y-2">
@@ -149,20 +161,35 @@ const Profile: React.FC = () => {
              <div className="space-y-8 animate-fade-in-up">
                 {/* Welcome Card */}
                 <div className="bg-black rounded-[2.5rem] p-8 lg:p-12 text-white relative overflow-hidden shadow-2xl">
-                   <div className="absolute top-0 right-0 w-64 h-64 bg-gold-500 rounded-full blur-[100px] opacity-20"></div>
+                   <div className={`absolute top-0 right-0 w-64 h-64 ${level.name === 'Gold' ? 'bg-gold-500' : level.name === 'Platinum' ? 'bg-cyan-500' : level.name === 'Diamond' ? 'bg-purple-500' : 'bg-gray-500'} rounded-full blur-[100px] opacity-20`}></div>
                    <div className="relative z-10">
-                      <p className="text-gold-500 text-xs font-bold uppercase tracking-[0.2em] mb-2">Membership Status</p>
+                      <p className={`${level.color} text-xs font-bold uppercase tracking-[0.2em] mb-2`}>Membership Status</p>
                       <h1 className="text-4xl lg:text-6xl font-heading font-black uppercase mb-6 leading-none">The Vault <br/>Access Granted</h1>
                       <div className="flex gap-8">
                          <div>
-                            <p className="text-3xl font-heading font-black">0</p>
+                            <p className="text-3xl font-heading font-black">{user.points || 0}</p>
                             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Points Earned</p>
                          </div>
                          <div>
-                            <p className="text-3xl font-heading font-black">Tier 1</p>
+                            <p className={`text-3xl font-heading font-black ${level.color}`}>{level.name}</p>
                             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Current Level</p>
                          </div>
                       </div>
+                      
+                      {level.next && (
+                          <div className="mt-8 max-w-sm">
+                             <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-2 text-gray-400">
+                                <span>Progress to next tier</span>
+                                <span>{level.next - (user.points || 0)} pts needed</span>
+                             </div>
+                             <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden">
+                                <div 
+                                    className={`h-full ${level.name === 'Gold' ? 'bg-gold-500' : 'bg-white'}`} 
+                                    style={{ width: `${Math.min(100, ((user.points || 0) / level.next) * 100)}%` }}
+                                ></div>
+                             </div>
+                          </div>
+                      )}
                    </div>
                 </div>
 

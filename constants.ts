@@ -109,7 +109,7 @@ export const PRODUCTS: Product[] = [
     price: 2999,
     sku: "AD-UB-006",
     color: "Core Black",
-    category: "Shoes",
+    category: "Running",
     sizes: { "UK7": 10, "UK8": 15, "UK9": 5 },
     images: [
       "https://images.unsplash.com/photo-1608231387042-66d1773070a5?q=80&w=2000&auto=format&fit=crop",
@@ -146,10 +146,25 @@ export const PRODUCTS: Product[] = [
       "https://images.unsplash.com/photo-1597045566677-8cf032ed6634?q=80&w=2000&auto=format&fit=crop"
     ],
     created_at: "2024-01-09T00:00:00Z"
+  },
+  {
+    id: "9",
+    title: "Nike ZoomX Vaporfly Next%",
+    description: "The ultimate racing shoe. Featuring responsive ZoomX foam and a carbon fiber plate for maximum energy return.",
+    price: 4999,
+    sku: "NK-ZF-NEXT",
+    color: "Aurora Green",
+    category: "Running",
+    sizes: { "UK7": 8, "UK8": 10, "UK9": 5 },
+    images: [
+      "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=1974&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1551107696-a4b0c5a0d9a2?q=80&w=2000&auto=format&fit=crop"
+    ],
+    created_at: "2024-01-10T00:00:00Z"
   }
 ];
 
-export const CATEGORIES = ["Sneakers", "Slides", "Clogs", "Shoes"];
+export const CATEGORIES = ["Sneakers", "Running", "Slides", "Clogs", "Shoes"];
 
 export const REVIEWS = [
   { name: "Rahul S.", rating: 5, text: "The quality is 99% close to original. Packaging was also premium." },

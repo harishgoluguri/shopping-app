@@ -1,12 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
-import { useNavigate } from 'react-router-dom';
 
 interface User {
   id: string;
   email: string;
   name: string;
-  address: string; // Computed string for display
+  address: string;
   address1: string;
   address2?: string;
   city: string;
@@ -16,9 +15,9 @@ interface User {
   phone_number: string;
   alternate_phone_number?: string;
   created_at: string;
+  points: number; // Added points field
 }
 
-// Interface matching the actual database schema (using 'gmail' column and separated address)
 interface DBUser {
   id: string;
   gmail: string;
@@ -33,13 +32,15 @@ interface DBUser {
   alternate_phone_number?: string;
   created_at: string;
   password?: string;
+  points?: number; // Points column in custom_users
 }
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<string | null>;
-  register: (userData: Omit<User, 'id' | 'created_at' | 'address'> & { password: string }) => Promise<string | null>;
+  register: (userData: Omit<User, 'id' | 'created_at' | 'address' | 'points'> & { password: string }) => Promise<string | null>;
   updateProfile: (updates: Partial<User>) => Promise<string | null>;
+  addPoints: (amount: number) => Promise<void>;
   logout: () => void;
   loading: boolean;
 }
@@ -54,19 +55,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const getErrorMessage = (error: any): string => {
     if (!error) return "An unknown error occurred";
     if (typeof error === 'string') return error;
-    
-    // Supabase/Postgrest Error structure
     if (error.message) return error.message;
     if (error.error_description) return error.error_description;
-    
-    // Fallback for objects
-    try {
-      const json = JSON.stringify(error);
-      if (json === '{}') return String(error);
-      return json;
-    } catch {
-      return "Error processing request";
-    }
+    return "Error processing request";
   };
 
   // Helper to map DB user to App user
@@ -84,7 +75,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         id: dbUser.id,
         email: dbUser.gmail,
         name: dbUser.name,
-        address: fullAddress, // Computed for display compatibility
+        address: fullAddress,
         address1: dbUser.address1 || '',
         address2: dbUser.address2,
         city: dbUser.city || '',
@@ -93,7 +84,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         country: dbUser.country || '',
         phone_number: dbUser.phone_number,
         alternate_phone_number: dbUser.alternate_phone_number,
-        created_at: dbUser.created_at
+        created_at: dbUser.created_at,
+        points: dbUser.points || 0
     };
   };
 
@@ -103,25 +95,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (storedUser) {
         try {
           const parsedUser = JSON.parse(storedUser);
-          // Optimistically set from local storage first
-          setUser(parsedUser);
-
-          // Fetch fresh data from DB to ensure details are up to date
-          const { data, error } = await supabase
+          
+          // Fetch fresh data from DB
+          const { data: dbUser, error } = await supabase
             .from('custom_users')
             .select('*')
             .eq('id', parsedUser.id)
             .maybeSingle(); 
 
-          if (data && !error) {
-            const mappedUser = mapUser(data as DBUser);
+          if (dbUser && !error) {
+            const mappedUser = mapUser(dbUser as DBUser);
             setUser(mappedUser);
             localStorage.setItem('sdgUser', JSON.stringify(mappedUser));
           } else {
-            console.warn("Could not refresh user session from DB");
+            // If DB fetch fails, fall back to local storage
+             setUser({...parsedUser, points: parsedUser.points || 0});
           }
         } catch (e) {
-          console.error("Error parsing stored user", e);
           localStorage.removeItem('sdgUser');
         }
       }
@@ -136,7 +126,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { data, error } = await supabase
         .from('custom_users')
         .select('*')
-        .eq('gmail', email) // Map to DB column 'gmail'
+        .eq('gmail', email)
         .eq('password', password)
         .maybeSingle(); 
 
@@ -146,7 +136,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const mappedUser = mapUser(data as DBUser);
         setUser(mappedUser);
         localStorage.setItem('sdgUser', JSON.stringify(mappedUser));
-        return null; // No error
+        return null;
       } else {
         return "Invalid email or password";
       }
@@ -156,12 +146,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const register = async (userData: Omit<User, 'id' | 'created_at' | 'address'> & { password: string }) => {
+  const register = async (userData: Omit<User, 'id' | 'created_at' | 'address' | 'points'> & { password: string }) => {
     try {
       const { data, error } = await supabase
         .from('custom_users')
         .insert([{
-          gmail: userData.email, // Map to DB column 'gmail'
+          gmail: userData.email,
           password: userData.password, 
           name: userData.name,
           address1: userData.address1,
@@ -171,15 +161,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           pincode: userData.pincode,
           country: userData.country,
           phone_number: userData.phone_number,
-          alternate_phone_number: userData.alternate_phone_number || null 
+          alternate_phone_number: userData.alternate_phone_number || null,
+          points: 0 // Initialize points column
         }])
         .select()
         .single();
 
       if (error) {
-        if (error.code === '23505') {
-            return "This email is already registered.";
-        }
+        if (error.code === '23505') return "This email is already registered.";
         throw error;
       }
 
@@ -191,7 +180,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       return "Registration failed";
     } catch (err: any) {
-       console.error("Registration Error:", err);
        return getErrorMessage(err);
     }
   };
@@ -199,21 +187,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const updateProfile = async (updates: Partial<User>) => {
     if (!user) return "No user logged in";
     try {
-      // Map updates back to DB schema if email is involved
       const dbUpdates: any = { ...updates };
       
-      // Handle mappings
       if (updates.email) {
           dbUpdates.gmail = updates.email;
           delete dbUpdates.email;
       }
+      if ('address' in dbUpdates) delete dbUpdates.address;
+      if ('points' in dbUpdates) delete dbUpdates.points; // Points handled separately via addPoints
 
-      // Remove computed 'address' from DB update
-      if ('address' in dbUpdates) {
-        delete dbUpdates.address;
-      }
-
-      // Only hit DB if there are fields to update
       if (Object.keys(dbUpdates).length > 0) {
           const { data, error } = await supabase
             .from('custom_users')
@@ -225,7 +207,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           if (error) throw error;
 
           if (data) {
-            const mappedUser = mapUser(data as DBUser);
+            // Preserve existing points in state since updateProfile shouldn't touch them
+            const currentPoints = user.points;
+            const mappedUser = mapUser({ ...data, points: currentPoints } as DBUser);
             setUser(mappedUser);
             localStorage.setItem('sdgUser', JSON.stringify(mappedUser));
             return null;
@@ -234,8 +218,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return "Update failed";
 
     } catch (err: any) {
-      console.error("Update Error:", err);
       return getErrorMessage(err);
+    }
+  };
+
+  // Function to add points directly to custom_users table
+  const addPoints = async (amount: number) => {
+    if (!user) return;
+    
+    try {
+      const currentPoints = user.points || 0;
+      const newPoints = currentPoints + amount;
+
+      // Update custom_users table
+      const { error } = await supabase
+        .from('custom_users')
+        .update({ points: newPoints })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error("Failed to add points DB:", error);
+        return;
+      }
+
+      // Update local state
+      const updatedUser = { ...user, points: newPoints };
+      setUser(updatedUser);
+      localStorage.setItem('sdgUser', JSON.stringify(updatedUser));
+      
+    } catch (e) {
+      console.error("Error adding points:", e);
     }
   };
 
@@ -245,7 +257,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, updateProfile, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, updateProfile, addPoints, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

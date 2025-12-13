@@ -71,8 +71,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
              <div className="absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-sm border-t border-gray-100 p-4 translate-y-full transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] lg:group-hover:translate-y-0 hidden lg:flex flex-col gap-3">
                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-center text-gray-400">Quick Add Size</p>
                  <div className="flex flex-wrap justify-center gap-2">
-                     {Object.entries(product.sizes || {}).slice(0, 5).map(([size, stock]) => (
-                         stock > 0 && (
+                     {Object.entries(product.sizes || {}).slice(0, 6).map(([size, stock]) => (
+                         (stock as number) > 0 && (
                              <button 
                                 key={size}
                                 onClick={(e) => handleQuickAdd(e, size)}

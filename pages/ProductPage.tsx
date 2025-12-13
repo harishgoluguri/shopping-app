@@ -3,16 +3,16 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { CURRENCY } from '../constants';
 import { useCart } from '../context/CartContext';
 import { useProducts } from '../context/ProductContext';
-import { ChevronRight, Star, Truck, ShieldCheck, Loader2, Minus, Plus, Share2, Heart, ChevronDown, AlertCircle, ArrowLeft, Info } from 'lucide-react';
+import { ChevronRight, Star, Truck, ShieldCheck, Loader2, Minus, Plus, Share2, Heart, ChevronDown, AlertCircle, ArrowLeft, Info, ZoomIn } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 
-const Accordion = ({ title, icon: Icon, children, defaultOpen = false }: { title: string, icon?: any, children: React.ReactNode, defaultOpen?: boolean }) => {
+const Accordion = ({ title, icon: Icon, children, defaultOpen = false }: { title: string, icon?: any, children?: React.ReactNode, defaultOpen?: boolean }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
     <div className="border-t border-gray-100">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="flex justify-between items-center w-full py-5 text-left group select-none"
+        className="flex justify-between items-center w-full py-5 text-left group select-none hover:bg-gray-50/50 transition-colors px-2 -mx-2 rounded-lg"
       >
         <div className="flex items-center gap-3">
              {Icon && <Icon size={18} strokeWidth={1.5} className="text-gray-400" />}
@@ -62,6 +62,11 @@ const ProductPage: React.FC = () => {
     }
   }, [products, id]);
 
+  // Reset qty when size changes
+  useEffect(() => {
+      setQty(1);
+  }, [selectedSize]);
+
   const handleScroll = () => {
     if (scrollContainerRef.current) {
         const index = Math.round(scrollContainerRef.current.scrollLeft / scrollContainerRef.current.clientWidth);
@@ -100,7 +105,6 @@ const ProductPage: React.FC = () => {
 
   const handleAddToCart = () => {
     if (!selectedSize) {
-        // Find the size selector and shake it or scroll to it
         const sizeSelector = document.getElementById('size-selector');
         if(sizeSelector) {
             sizeSelector.classList.add('animate-shake');
@@ -110,17 +114,36 @@ const ProductPage: React.FC = () => {
         return;
     }
     setAddingToCart(true);
-    for(let i=0; i<qty; i++) {
-        addToCart(product, selectedSize);
-    }
+    // Pass Qty directly to Context
+    addToCart(product, selectedSize, qty);
     setTimeout(() => setAddingToCart(false), 1500);
   };
 
+  const incrementQty = () => {
+      if (!selectedSize) {
+          const sizeSelector = document.getElementById('size-selector');
+          if(sizeSelector) {
+              sizeSelector.classList.add('animate-shake');
+              setTimeout(() => sizeSelector.classList.remove('animate-shake'), 500);
+          }
+          return;
+      }
+      if (qty < stockForSize) {
+          setQty(qty + 1);
+      } else {
+          // Optional: Visual feedback that max is reached
+      }
+  };
+
+  const decrementQty = () => {
+      setQty(Math.max(1, qty - 1));
+  };
+
   return (
-    <div className="bg-white min-h-screen pt-16 lg:pt-24 pb-32">
+    <div className="bg-white min-h-screen pt-16 lg:pt-28 pb-32">
         
       {/* Breadcrumbs */}
-      <div className="px-6 lg:px-12 py-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+      <div className="px-6 lg:px-12 py-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
          <Link to="/" className="hover:text-black transition-colors">Home</Link>
          <ChevronRight size={12} />
          <Link to="/shop" className="hover:text-black transition-colors">Shop</Link>
@@ -130,19 +153,22 @@ const ProductPage: React.FC = () => {
          <span className="text-black line-clamp-1">{product.title}</span>
       </div>
 
-      <div className="max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-16">
+      <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-16">
          
          {/* LEFT: Image Gallery */}
          <div className="lg:col-span-7 xl:col-span-8 bg-white relative">
             
-            {/* Mobile/Tablet Carousel (Hidden on large desktop if we want grid, but let's stick to consistent carousel or stack) */}
-            {/* Design Choice: Vertical Stack for Desktop, Carousel for Mobile */}
-            
-            {/* Desktop Vertical Stack */}
-            <div className="hidden lg:flex flex-col gap-4 px-12">
+            {/* Desktop Grid Layout (Premium Look) */}
+            <div className="hidden lg:grid grid-cols-2 gap-4 px-12">
                 {product.images?.map((img: string, idx: number) => (
-                    <div key={idx} className="w-full bg-[#F6F6F6] aspect-[4/5] relative overflow-hidden group cursor-zoom-in">
+                    <div 
+                        key={idx} 
+                        className={`w-full bg-[#F6F6F6] aspect-[4/5] relative overflow-hidden group cursor-zoom-in rounded-2xl ${idx % 3 === 0 && product.images.length > 2 ? 'col-span-2 aspect-[16/9]' : ''}`}
+                    >
                         <img src={img} alt={`View ${idx}`} className="w-full h-full object-contain object-center mix-blend-multiply transition-transform duration-700 group-hover:scale-110" />
+                        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity bg-white p-2 rounded-full shadow-sm">
+                            <ZoomIn size={20} className="text-gray-500" />
+                        </div>
                     </div>
                 ))}
             </div>
@@ -192,19 +218,20 @@ const ProductPage: React.FC = () => {
 
          {/* RIGHT: Product Details (Sticky) */}
          <div className="lg:col-span-5 xl:col-span-4 px-6 lg:pr-12 lg:pl-0 pt-8 lg:pt-0">
-            <div className="lg:sticky lg:top-28 h-fit lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto hide-scrollbar">
+            {/* Sticky Container with internal scroll for very long content */}
+            <div className="lg:sticky lg:top-28 h-fit lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto hide-scrollbar pr-2">
                 
                 <div className="flex justify-between items-start mb-4">
                     <div>
-                        <h1 className="text-2xl lg:text-4xl font-heading font-black text-black uppercase leading-none mb-2">{product.title}</h1>
+                        <h1 className="text-3xl lg:text-5xl font-heading font-black text-black uppercase leading-[0.9] mb-2">{product.title}</h1>
                         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{product.category}</p>
                     </div>
                     {/* Desktop Wishlist */}
                     <button 
                         onClick={() => setIsWishlisted(!isWishlisted)}
-                        className="hidden lg:block p-3 hover:bg-gray-50 rounded-full transition-colors"
+                        className="hidden lg:block p-3 hover:bg-gray-50 rounded-full transition-colors border border-gray-100 hover:border-black"
                     >
-                        <Heart size={24} fill={isWishlisted ? "currentColor" : "none"} className={isWishlisted ? "text-red-500" : "text-black"} />
+                        <Heart size={20} fill={isWishlisted ? "currentColor" : "none"} className={isWishlisted ? "text-red-500" : "text-black"} />
                     </button>
                 </div>
 
@@ -228,7 +255,8 @@ const ProductPage: React.FC = () => {
                         <button className="text-[10px] font-bold uppercase tracking-widest text-gray-400 underline hover:text-black">Size Guide</button>
                     </div>
                     
-                    <div className="grid grid-cols-4 gap-2 lg:gap-3">
+                    {/* Updated Grid for 6 sizes: 3 cols mobile, 6 cols desktop */}
+                    <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 lg:gap-3">
                         {Object.entries(product.sizes || {}).map(([size, stock]: [string, any]) => {
                             const isAvailable = stock > 0;
                             return (
@@ -236,7 +264,7 @@ const ProductPage: React.FC = () => {
                                     key={size}
                                     onClick={() => isAvailable && setSelectedSize(size)}
                                     disabled={!isAvailable}
-                                    className={`py-3 lg:py-4 rounded-lg lg:rounded-xl text-xs lg:text-sm font-bold border transition-all duration-200 
+                                    className={`py-3 lg:py-4 rounded-lg lg:rounded-xl text-xs lg:text-sm font-bold border transition-all duration-200 flex items-center justify-center
                                         ${selectedSize === size 
                                             ? 'bg-black text-white border-black shadow-lg scale-[1.02]' 
                                             : isAvailable 
@@ -262,9 +290,15 @@ const ProductPage: React.FC = () => {
                     <div className="flex gap-4">
                         {/* Qty */}
                         <div className="flex items-center bg-[#F5F5F7] rounded-full px-4 gap-4 h-14">
-                            <button onClick={() => setQty(Math.max(1, qty-1))} className="w-8 h-full flex items-center justify-center hover:opacity-60"><Minus size={16}/></button>
+                            <button onClick={decrementQty} className="w-8 h-full flex items-center justify-center hover:opacity-60"><Minus size={16}/></button>
                             <span className="font-bold text-sm w-4 text-center">{qty}</span>
-                            <button onClick={() => setQty(qty+1)} className="w-8 h-full flex items-center justify-center hover:opacity-60"><Plus size={16}/></button>
+                            <button 
+                                onClick={incrementQty} 
+                                disabled={!!selectedSize && qty >= stockForSize}
+                                className="w-8 h-full flex items-center justify-center hover:opacity-60 disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                                <Plus size={16}/>
+                            </button>
                         </div>
 
                         {/* Add to Cart */}
@@ -312,7 +346,7 @@ const ProductPage: React.FC = () => {
 
       {/* Similar Products */}
       {relatedProducts.length > 0 && (
-          <div className="max-w-[1800px] mx-auto px-6 lg:px-12 mt-20 border-t border-gray-100 pt-20">
+          <div className="max-w-[1600px] mx-auto px-6 lg:px-12 mt-20 border-t border-gray-100 pt-20">
              <div className="flex justify-between items-end mb-10">
                 <h3 className="text-2xl md:text-3xl font-heading font-black uppercase tracking-tight">You Might Also Like</h3>
                 <Link to="/shop" className="text-xs font-bold uppercase tracking-widest underline hover:text-gold-600 transition-colors">View All</Link>
@@ -326,7 +360,7 @@ const ProductPage: React.FC = () => {
           </div>
       )}
 
-      {/* Mobile Sticky Add To Cart (Appears when scrolling past main button, but for now simple fixed bottom bar) */}
+      {/* Mobile Sticky Add To Cart */}
       <div className={`fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-xl border-t border-gray-100 p-4 pb-safe z-40 lg:hidden transition-transform duration-300 ${isSoldOut ? 'translate-y-full' : 'translate-y-0'}`}>
          <div className="flex gap-4">
              <div className="flex-1">

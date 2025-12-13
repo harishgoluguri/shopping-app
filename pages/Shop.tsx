@@ -94,40 +94,51 @@ const Shop: React.FC = () => {
          </div>
       </div>
 
-      <div className="max-w-[1600px] mx-auto px-4 lg:px-12 py-6">
-        <div className="flex flex-col lg:flex-row gap-12">
+      <div className="max-w-[1600px] mx-auto px-4 lg:px-12 py-8 lg:py-12">
+        <div className="flex flex-col lg:flex-row gap-16">
           
           {/* Sidebar Filters (Desktop) */}
           <div className="hidden lg:block w-64 flex-shrink-0">
-             <div className="sticky top-32">
-                <h3 className="font-heading font-black text-xl mb-6 uppercase">Collections</h3>
-                <ul className="space-y-3">
-                   <li 
-                      className={`cursor-pointer px-4 py-3 rounded-xl transition-all text-sm font-bold flex justify-between items-center ${activeCategory === 'All' ? 'bg-gray-100 text-black' : 'text-gray-500 hover:bg-gray-50'}`}
-                      onClick={() => setActiveCategory('All')}
-                   >
-                      View All
-                   </li>
-                   {categories.map(cat => (
-                      <li 
-                        key={cat} 
-                        className={`cursor-pointer px-4 py-3 rounded-xl transition-all text-sm font-bold flex justify-between items-center ${isCategoryActive(cat) ? 'bg-gray-100 text-black' : 'text-gray-500 hover:bg-gray-50'}`}
-                        onClick={() => setActiveCategory(cat)}
-                      >
-                        {cat}
-                      </li>
-                   ))}
-                </ul>
+             <div className="sticky top-32 max-h-[calc(100vh-120px)] overflow-y-auto hide-scrollbar">
+                <div className="pb-8">
+                  <h3 className="font-heading font-black text-xl mb-6 uppercase tracking-tight">Collections</h3>
+                  <ul className="space-y-2">
+                    <li 
+                        className={`cursor-pointer px-4 py-3 rounded-xl transition-all text-sm font-bold flex justify-between items-center ${activeCategory === 'All' ? 'bg-gray-100 text-black' : 'text-gray-500 hover:bg-gray-50'}`}
+                        onClick={() => setActiveCategory('All')}
+                    >
+                        View All
+                    </li>
+                    {categories.map(cat => (
+                        <li 
+                          key={cat} 
+                          className={`cursor-pointer px-4 py-3 rounded-xl transition-all text-sm font-bold flex justify-between items-center ${isCategoryActive(cat) ? 'bg-gray-100 text-black' : 'text-gray-500 hover:bg-gray-50'}`}
+                          onClick={() => setActiveCategory(cat)}
+                        >
+                          {cat}
+                        </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div className="border-t border-gray-100 pt-8">
+                   <h3 className="font-heading font-black text-xl mb-6 uppercase tracking-tight">Price Range</h3>
+                   {/* Placeholder for Price filter */}
+                   <div className="px-4 text-sm text-gray-400 font-bold">Price filter coming soon</div>
+                </div>
              </div>
           </div>
 
           {/* Product Grid */}
           <div className="flex-1">
-             <div className="hidden lg:flex justify-between items-center mb-8">
-               <h1 className="text-4xl font-heading font-black">
-                   {activeSearch ? `SEARCH: "${activeSearch}"` : (activeCategory === 'All' ? 'ALL PRODUCTS' : activeCategory.toUpperCase())}
-               </h1>
-               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{filteredProducts.length} items</p>
+             <div className="hidden lg:flex justify-between items-center mb-10">
+               <div>
+                  <h1 className="text-5xl font-heading font-black uppercase tracking-tight mb-2">
+                      {activeSearch ? `Results` : (activeCategory === 'All' ? 'All Products' : activeCategory)}
+                  </h1>
+                  {activeSearch && <p className="text-gray-500 font-bold text-sm">Showing results for "{activeSearch}"</p>}
+               </div>
+               <span className="text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-4 py-2 rounded-full">{filteredProducts.length} items</span>
              </div>
 
              {/* Search Result Header for Mobile */}
@@ -138,17 +149,20 @@ const Shop: React.FC = () => {
                  </div>
              )}
 
-             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-3 md:gap-6">
+             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-10 lg:gap-x-8 lg:gap-y-12">
                {filteredProducts.map(product => (
                  <ProductCard key={product.id} product={product} />
                ))}
              </div>
              
              {filteredProducts.length === 0 && (
-                <div className="py-20 text-center flex flex-col items-center">
-                    <Search className="text-gray-200 mb-4" size={48} />
-                    <p className="text-lg font-bold text-gray-400">No products found</p>
-                    {activeSearch && <button onClick={() => setActiveSearch('')} className="mt-4 bg-black text-white px-6 py-2 rounded-full text-xs font-bold uppercase">Clear Search</button>}
+                <div className="py-32 text-center flex flex-col items-center">
+                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                        <Search className="text-gray-300" size={32} />
+                    </div>
+                    <h3 className="text-2xl font-heading font-black uppercase mb-2">No Match Found</h3>
+                    <p className="text-gray-400 font-medium">Try checking your spelling or use different keywords.</p>
+                    {activeSearch && <button onClick={() => setActiveSearch('')} className="mt-8 bg-black text-white px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-gold-500 transition-colors">Clear Search</button>}
                 </div>
              )}
           </div>

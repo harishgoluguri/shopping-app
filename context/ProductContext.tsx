@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import { Product } from '../types';
@@ -27,7 +26,34 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
         console.warn('Supabase fetch failed, falling back to mock data:', error.message);
         setProducts(PRODUCTS);
       } else if (data && data.length > 0) {
-        setProducts(data);
+        // Map DB columns size_6...size_11 to the sizes object expected by the UI
+        const mappedProducts: Product[] = data.map((item: any) => {
+          // Check if individual columns exist, otherwise fallback to existing sizes jsonb if present
+          const hasIndividualSizes = item.size_6 !== undefined || item.size_7 !== undefined;
+          
+          let sizesObj: Record<string, number> = {};
+
+          if (hasIndividualSizes) {
+             // Explicit mapping ensures correct order (UK6 -> UK11)
+             sizesObj = {
+                "UK6": item.size_6 ?? 0,
+                "UK7": item.size_7 ?? 0,
+                "UK8": item.size_8 ?? 0,
+                "UK9": item.size_9 ?? 0,
+                "UK10": item.size_10 ?? 0,
+                "UK11": item.size_11 ?? 0
+             };
+          } else if (item.sizes) {
+             sizesObj = item.sizes;
+          }
+
+          return {
+            ...item,
+            sizes: sizesObj
+          };
+        });
+        
+        setProducts(mappedProducts);
       } else {
         // If data is empty (table exists but no rows), use mock data
         console.log('No products in DB, using mock data');

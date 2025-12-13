@@ -88,6 +88,7 @@ const Navbar: React.FC = () => {
                   </Link>
                 </div>
                 <Link to="/shop?category=Sneakers" className={`text-[11px] font-bold uppercase tracking-[0.2em] hover:opacity-60 transition-opacity ${textColorClass}`}>Sneakers</Link>
+                <Link to="/shop?category=Running" className={`text-[11px] font-bold uppercase tracking-[0.2em] hover:opacity-60 transition-opacity ${textColorClass}`}>Running</Link>
                 <Link to="/shop?category=Slides" className={`text-[11px] font-bold uppercase tracking-[0.2em] hover:opacity-60 transition-opacity ${textColorClass}`}>Slides</Link>
                 <Link to="/about" className={`text-[11px] font-bold uppercase tracking-[0.2em] hover:opacity-60 transition-opacity ${textColorClass}`}>Story</Link>
               </div>
@@ -141,7 +142,7 @@ const Navbar: React.FC = () => {
               <div className="space-y-6">
                 <h4 className="text-xs font-black uppercase tracking-widest text-gray-400">Categories</h4>
                 <ul className="space-y-4">
-                  {['Sneakers', 'Slides', 'Clogs', 'Shoes'].map(cat => (
+                  {['Sneakers', 'Running', 'Slides', 'Clogs', 'Shoes'].map(cat => (
                     <li key={cat}>
                       <Link to={`/shop?category=${cat}`} className="text-lg font-heading font-bold text-black hover:text-gold-500 transition-colors uppercase tracking-wide flex items-center gap-2 group">
                         {cat} <ArrowRight size={16} className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300"/>
@@ -237,7 +238,8 @@ const Navbar: React.FC = () => {
                { name: 'Home', path: '/' },
                { name: 'Shop All', path: '/shop' },
                { name: 'Sneakers', path: '/shop?category=Sneakers' },
-               { name: 'Slides', path: '/shop?category=Slides' }
+               { name: 'Running', path: '/shop?category=Running' },
+               { name: 'Slides', path: '/shop?category=Slides' },
              ].map((link, idx) => (
               <Link
                 key={link.name}

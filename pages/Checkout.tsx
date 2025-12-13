@@ -13,15 +13,17 @@ import {
   QrCode,
   AlertCircle,
   Copy,
-  Check
+  Check,
+  Loader2
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const Checkout: React.FC = () => {
-  const { cart, cartTotal, cartSubtotal, discount, appliedCoupon } = useCart();
-  const { user } = useAuth();
+  const { cart, cartTotal, cartSubtotal, discount, appliedCoupon, clearCart } = useCart();
+  const { user, addPoints } = useAuth();
   const navigate = useNavigate();
   const [isSummaryOpen, setSummaryOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Payment State
   const [utrNumber, setUtrNumber] = useState('');
@@ -40,7 +42,7 @@ const Checkout: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleWhatsAppOrder = () => {
+  const handleWhatsAppOrder = async () => {
     if (!user) return;
     
     // Validation: Require UTR Number
@@ -51,6 +53,12 @@ const Checkout: React.FC = () => {
         return;
     }
 
+    setIsProcessing(true);
+
+    // 1. Add Points Reward
+    await addPoints(500);
+
+    // 2. Prepare WhatsApp Message
     let message = `
 *NEW ORDER REQUEST* 🛒
 ------------------
@@ -86,7 +94,15 @@ Transaction ID / UTR: ${utrNumber}
 (Please verify this transaction)`;
 
     const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(message)}`;
+    
+    // 3. Open WhatsApp and complete
     window.open(url, '_blank');
+    
+    // Optional: Clear cart after a delay to simulate completion (since we don't have a backend to confirm webhook)
+    setTimeout(() => {
+        setIsProcessing(false);
+        // clearCart(); // Uncomment if you want to clear cart immediately
+    }, 1000);
   };
 
   if (cart.length === 0) return <div className="min-h-screen flex items-center justify-center font-bold text-gray-500">Redirecting...</div>;
@@ -320,14 +336,14 @@ Transaction ID / UTR: ${utrNumber}
                 <div className="pt-4">
                     <button 
                         onClick={handleWhatsAppOrder}
-                        disabled={!utrNumber.trim()}
+                        disabled={!utrNumber.trim() || isProcessing}
                         className={`w-full py-5 rounded-2xl font-black uppercase tracking-[0.15em] text-sm shadow-xl transition-all active:translate-y-0 active:scale-[0.98] flex items-center justify-center gap-3
-                        ${utrNumber.trim() 
+                        ${utrNumber.trim() && !isProcessing
                             ? 'bg-[#25D366] hover:bg-[#20b957] text-white shadow-green-100 hover:shadow-green-200 hover:-translate-y-1' 
                             : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
                     >
-                         <MessageCircle size={20} fill={utrNumber.trim() ? "white" : "none"} /> 
-                         {utrNumber.trim() ? "Complete Order" : "Enter UTR to Continue"}
+                         {isProcessing ? <Loader2 className="animate-spin" size={20}/> : <MessageCircle size={20} fill={utrNumber.trim() ? "white" : "none"} />} 
+                         {isProcessing ? "Adding Rewards..." : (utrNumber.trim() ? "Complete Order" : "Enter UTR to Continue")}
                     </button>
                     
                     <Link to="/cart" className="flex items-center justify-center gap-2 text-xs font-bold text-gray-400 hover:text-black mt-6 transition-colors">
