@@ -61,6 +61,24 @@
         -moz-osx-font-smoothing: grayscale;
         -webkit-tap-highlight-color: transparent;
       }
+      
+      /* Premium Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #e0e0e0;
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #a3a3a3;
+      }
+
+      /* Utility to hide scrollbar when needed */
       .hide-scrollbar::-webkit-scrollbar {
         display: none;
       }
@@ -68,6 +86,7 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
       }
+      
       /* Crocs-like Selection */
       ::selection {
         background: #000;

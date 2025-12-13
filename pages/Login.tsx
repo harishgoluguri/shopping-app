@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Mail, Lock, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { WHATSAPP_NUMBER } from '../constants';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -30,6 +31,13 @@ const Login: React.FC = () => {
     } else {
       // Success is handled by useEffect
     }
+  };
+
+  const handleForgotPassword = () => {
+    const emailText = email.trim() ? email.trim() : "[Insert Email Here]";
+    const message = `*Forgot Password Request* 🔒\n\nHello Admin,\nI would like to request a password reset for my account associated with email: ${emailText}.\n\nPlease help me proceed.`;
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
   };
 
   return (
@@ -90,7 +98,13 @@ const Login: React.FC = () => {
             </div>
 
             <div className="flex justify-end">
-               <a href="#" className="text-xs font-bold text-gray-400 hover:text-black transition-colors">Forgot Password?</a>
+               <button 
+                 type="button" 
+                 onClick={handleForgotPassword}
+                 className="text-xs font-bold text-gray-400 hover:text-black transition-colors"
+               >
+                 Forgot Password?
+               </button>
             </div>
 
             <button 

@@ -219,7 +219,8 @@ const ProductPage: React.FC = () => {
          {/* RIGHT: Product Details (Sticky) */}
          <div className="lg:col-span-5 xl:col-span-4 px-6 lg:pr-12 lg:pl-0 pt-8 lg:pt-0">
             {/* Sticky Container with internal scroll for very long content */}
-            <div className="lg:sticky lg:top-28 h-fit lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto hide-scrollbar pr-2">
+            {/* Removed hide-scrollbar to allow desktop scrolling if content exceeds viewport */}
+            <div className="lg:sticky lg:top-28 h-fit lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto pr-2 custom-scrollbar">
                 
                 <div className="flex justify-between items-start mb-4">
                     <div>

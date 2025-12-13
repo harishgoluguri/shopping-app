@@ -99,7 +99,7 @@ const Shop: React.FC = () => {
           
           {/* Sidebar Filters (Desktop) */}
           <div className="hidden lg:block w-64 flex-shrink-0">
-             <div className="sticky top-32 max-h-[calc(100vh-120px)] overflow-y-auto hide-scrollbar">
+             <div className="sticky top-32 max-h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar">
                 <div className="pb-8">
                   <h3 className="font-heading font-black text-xl mb-6 uppercase tracking-tight">Collections</h3>
                   <ul className="space-y-2">

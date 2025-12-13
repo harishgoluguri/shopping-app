@@ -63,7 +63,7 @@ const Navbar: React.FC = () => {
         className={`fixed top-0 w-full z-50 transition-all duration-500 border-b ${navBgClass}`}
         onMouseLeave={() => setShopHovered(false)}
       >
-        <div className="max-w-[1800px] mx-auto px-6 lg:px-12">
+        <div className="max-w-[1600px] mx-auto px-6 lg:px-12">
           <div className="flex items-center justify-between h-16 lg:h-24">
             
             {/* LEFT: Nav Links (Desktop) & Menu (Mobile) */}
@@ -136,7 +136,7 @@ const Navbar: React.FC = () => {
           onMouseEnter={() => setShopHovered(true)}
           onMouseLeave={() => setShopHovered(false)}
         >
-          <div className="max-w-[1800px] mx-auto px-12 py-12">
+          <div className="max-w-[1600px] mx-auto px-12 py-12">
             <div className="grid grid-cols-4 gap-12">
               {/* Column 1: Categories */}
               <div className="space-y-6">

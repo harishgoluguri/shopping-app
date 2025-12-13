@@ -24,7 +24,7 @@ const Home: React.FC = () => {
     { name: 'Running', img: 'https://imvagofypivmtbuylqqo.supabase.co/storage/v1/object/public/product_images.image_url/Adizero_EVO_SL_Shoes_White_JH6208_HM1.avif' },
     { name: 'Slides', img: 'https://imvagofypivmtbuylqqo.supabase.co/storage/v1/object/public/product_images.image_url/WMNS+NIKE+OFFCOURT+SLIDE.avif' },
     { name: 'Clogs', img: 'https://imvagofypivmtbuylqqo.supabase.co/storage/v1/object/public/product_images.image_url/118-207521O001.webp' },
-    { name: 'Sale', img: 'https://imvagofypivmtbuylqqo.supabase.co/storage/v1/object/public/product_images.image_url/nike_ib2267-001_02.webp', isSale: true },
+    { name: 'Sale', img: 'https://imvagofypivmtbuylqqo.supabase.co/storage/v1/object/public/product_images.image_url/adidasshoes-2025-09-23T121026.697.webp', isSale: true },
   ];
 
   return (
